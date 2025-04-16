@@ -9,17 +9,26 @@ $rs_alternative = $db->query($q_alternative);
 $rows_alternative = $rs_alternative->num_rows;
 $alternatives = [];
 while ($row = $rs_alternative->fetch_object()) {
-    $alternatives[$row->id_alternative] = $row->name;
+    array_push($alternatives, array(
+        'id' => $row->id_alternative,
+        'name' => $row->name
+    ));
 }
-
 
 $q_criteria = "SELECT * FROM saw_criterias";
 $rs_criteria = $db->query($q_criteria);
 $rows_criteria = $rs_criteria->num_rows;
 $criteria = [];
+
 while($row = $rs_criteria->fetch_object()) {
-    $criteria[$row->id_criteria] = $row->criteria;
+    array_push($criteria, array(
+        'id' => $row->id_criteria,
+        'name' => $row->criteria,
+        'weight' => $row->weight,
+        'attribute' => $row->attribute
+    ));
 }
+
 ?>
 
 <body>
@@ -43,17 +52,6 @@ while($row = $rs_criteria->fetch_object()) {
                             </div>
                             <div class="card-content">
                                 <div class="card-body">
-                                    <p class="card-text">Melakukan perhitungan normalisasi untuk mendapatkan matriks nilai ternormalisasi (R), dengan ketentuan :
-                                        Untuk normalisai nilai, jika faktor/attribute kriteria bertipe cost maka digunakan rumusan:
-                                        Rij = ( min{Xij} / Xij)
-                                        sedangkan jika faktor/attribute kriteria bertipe benefit maka digunakan rumusan:
-                                        Rij = ( Xij/max{Xij} )</p>
-
-                                    <button type="button" class="btn btn-outline-success btn-sm m-2" data-bs-toggle="modal"
-                                        data-bs-target="#inlineForm">
-                                        Isi Nilai Alternatif
-                                    </button>
-
                                     <div>
                                         <caption>
                                             Matrik Keputusan(X)
@@ -70,7 +68,7 @@ while($row = $rs_criteria->fetch_object()) {
                                                 <?php
                                                     $in = 1;
                                                     foreach ($criteria as $id => $row) {
-                                                        echo "<th>(C<sub>{$in}</sub>) {$row}</th>";
+                                                        echo "<th>(C<sub>{$in}</sub>) {$row['name']}</th>";
                                                         $in++;
                                                     }
                                                 ?>
@@ -78,12 +76,12 @@ while($row = $rs_criteria->fetch_object()) {
                                             <tr>
                                                 <?php
                                                 $i = 1;
-                                                foreach ($alternatives as $id_alternatives => $row) {
+                                                foreach ($alternatives as $id_alternatives => $alternative_row) {
                                                     echo "<tr>";
                                                     echo "<th style='text-align: center;'>A<sub>{$i}</sub></th>";
-                                                    echo "<th>{$row}</th>";
-                                                    foreach ($criteria as $id_criteria => $row) {
-                                                        echo "<td><input type='number' class='form-control nilai_alternative' data-id_alternative='{$id_alternatives}' data-id_criteria='{$id_criteria}'></td>";
+                                                    echo "<th>{$alternative_row['name']}</th>";
+                                                    foreach ($criteria as $id_criteria => $criteria_row) {
+                                                        echo "<td><input type='number' class='form-control nilai_alternative' data-id_alternative='{$alternative_row['id']}' data-id_criteria='{$criteria_row['id']}' value='{$i}'></td>";
                                                     }
                                                     echo "</tr>";
                                                     $i++;
@@ -93,30 +91,6 @@ while($row = $rs_criteria->fetch_object()) {
                                         </table>
                                     </div>
                                     <button type="button" class="btn btn-primary m-2 form-control" id="btn-normalisasi">Hitung Normalisasi</button>
-                                    <!-- Matrik Keputusan -->
-                                    <div>
-                                        <hr>
-                                        <caption>
-                                            Matrik Ternormalisasi (R)
-                                        </caption>
-                                        <br>
-                                        <br>
-                                        <table class="table table-striped mb-0">
-                                            <tr>
-                                                <th rowspan='2'>Alternatif</th>
-                                                <th colspan='5'>Kriteria</th>
-                                            </tr>
-                                            <tr>
-                                                <th>C1</th>
-                                                <th>C2</th>
-                                                <th>C3</th>
-                                                <th>C4</th>
-                                                <th>C5</th>
-                                            </tr>
-
-                                        </table>
-                                    </div>
-                                    <!-- Matrik Ternormalisasi -->
                                 </div>
                             </div>
                         </div>
@@ -133,11 +107,37 @@ while($row = $rs_criteria->fetch_object()) {
     $(document).ready(function() {
         $("#btn-normalisasi").click(function() {
             let data = $(".nilai_alternative");
-
+            let belumIsi = []
             data.each(function(i,e) {
-                console.log(e.val());
+                if($(e).val() && $(e).val() != 0){
+                    $(e).removeClass("is-invalid")
+                }else{
+                    belumIsi.push(e)
+                }
             })
-            
+            if(belumIsi.length > 0){
+                belumIsi.forEach(function(e) {
+                    $(e).addClass("is-invalid")
+                })
+            }else{
+                let nilai = {}
+                data.each(function(i,e) {
+                    let id_alternative = $(e).data("id_alternative")
+                    let id_criteria = $(e).data("id_criteria")
+                    let value = $(e).val()
+                    
+                    if (!(id_alternative in nilai)) {
+                        nilai[id_alternative] = []
+                    }
+
+                    nilai[id_alternative].push({
+                        id_criteria: id_criteria,
+                        value: value
+                    })
+                })
+                console.log(nilai);
+                
+            }
         });
     });
 </script>
