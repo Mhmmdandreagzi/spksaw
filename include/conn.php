@@ -2,7 +2,7 @@
 //-- konfigurasi database
 $dbhost = 'localhost';
 $dbuser = 'root';
-$dbpass = '';
+$dbpass = '4ndr3';
 $dbname = 'db_dss';
 //-- koneksi ke database server dengan extension mysqli
 $db = new mysqli($dbhost, $dbuser, $dbpass, $dbname);
